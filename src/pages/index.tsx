@@ -26,7 +26,7 @@ import { LzSenderConfig } from "@/config";
 import LzSenderAbi from "@/abi/LzSender.json";
 import ghoApprovalAbi from "@/abi/ghoApproval.json";
 import { sepoliaContract } from "@/constants";
-import
+import { usePublicClient } from "wagmi";
 import { useState } from "react";
 const bigShouldersDisplay = Big_Shoulders_Display({
   subsets: ["latin"],
@@ -37,13 +37,15 @@ export default function Home() {
   const { address } = useAccount();
   const { data: ensName, isLoading } = useEnsName({ address });
   const [visible, setVisible] = useState(false);
+  const client = usePublicClient();
 
   const getApproval = async () => {
-    const { result } = await publicClient.simulateContract({
+    const { result } = await client.simulateContract({
       address: "0xc4bF5CbDaBE595361438F8c6a187bDc330539c60",
       abi: ghoApprovalAbi,
       functionName: "approve",
       account: address,
+      args: [sepoliaContract],
     });
   };
 
