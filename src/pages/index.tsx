@@ -21,7 +21,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
+import { writeContract } from "@wagmi/core";
+import { LzSenderConfig } from "@/config";
+import LzSenderAbi from "@/abi/LzSender.json";
+import ghoApprovalAbi from "@/abi/ghoApproval.json";
+import { sepoliaContract } from "@/constants";
+import
+import { useState } from "react";
 const bigShouldersDisplay = Big_Shoulders_Display({
   subsets: ["latin"],
   weight: "700",
@@ -30,6 +36,16 @@ const bigShouldersDisplay = Big_Shoulders_Display({
 export default function Home() {
   const { address } = useAccount();
   const { data: ensName, isLoading } = useEnsName({ address });
+  const [visible, setVisible] = useState(false);
+
+  const getApproval = async () => {
+    const { result } = await publicClient.simulateContract({
+      address: "0xc4bF5CbDaBE595361438F8c6a187bDc330539c60",
+      abi: ghoApprovalAbi,
+      functionName: "approve",
+      account: address,
+    });
+  };
 
   return (
     <main
@@ -49,26 +65,26 @@ export default function Home() {
         <p>$69.420</p>
       </div>
       <div className="flex w-full gap-8">
-        <Card
-          icon={<Plus />}
-          heading="DEPOSIT"
-          subtext="ETH"
-          className="bg-[#05B274]"
-        />
         <Dialog>
           <DialogTrigger className="w-full">
             <Card
-              icon={<Download />}
-              heading="RECIEVE"
-              subtext="GHO"
-              className="bg-[#9396FF]"
+              icon={<Plus />}
+              heading="DEPOSIT"
+              subtext="ETH"
+              className="bg-[#05B274]"
             />
           </DialogTrigger>
           <DialogContent>
             <DialogHeader className="flex flex-col gap-4">
               <DialogTitle className="text-[22px]">DEPOSIT</DialogTitle>
               <DialogDescription>
-                <form className="flex flex-col gap-4">
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    const result = await getApproval();
+                  }}
+                  className="flex flex-col gap-4"
+                >
                   <div className="flex relative flex-col gap-1">
                     <input
                       className="rounded-xl  border px-4 py-3"
@@ -84,7 +100,7 @@ export default function Home() {
                   <div className="flex flex-col gap-1">
                     <label
                       htmlFor="recipientAddress"
-                      className="text-[#989898]"
+                      className="text-[#05B274]"
                     >
                       RECIEVING CHAIN
                     </label>
@@ -99,7 +115,10 @@ export default function Home() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <button className="bg-[#9396FF] rounded-xl text-black text-[22px] font-bold py-3 mt-10">
+                  <button
+                    type="submit"
+                    className="bg-[#9396FF] rounded-xl text-black text-[22px] font-bold py-3 mt-10"
+                  >
                     DEPOSIT
                   </button>
                 </form>
@@ -107,6 +126,19 @@ export default function Home() {
             </DialogHeader>
           </DialogContent>
         </Dialog>
+        <div
+          className="w-full"
+          onClick={() => {
+            setVisible(!visible);
+          }}
+        >
+          <Card
+            icon={<Download />}
+            heading="RECIEVE"
+            subtext="GHO"
+            className="bg-[#9396FF]"
+          />
+        </div>
 
         <Dialog>
           <DialogTrigger className="w-full">
@@ -121,7 +153,21 @@ export default function Home() {
             <DialogHeader className="flex flex-col gap-4">
               <DialogTitle className="text-[22px]">SEND</DialogTitle>
               <DialogDescription>
-                <form className="flex flex-col gap-4">
+                <form
+                  // onSubmit={async () => {
+                  //   const result = await writeContract(LzSenderConfig, {
+                  //     LzSenderAbi,
+                  //     address: sepoliaContract,
+                  //     functionName: "transferFrom",
+                  //     args: [
+                  //       "0xd2135CfB216b74109775236E36d4b433F1DF507B",
+                  //       "0xA0Cf798816D4b9b9866b5330EEa46a18382f251e",
+                  //       123n,
+                  //     ],
+                  //   });
+                  // }}
+                  className="flex flex-col gap-4"
+                >
                   <div className="flex flex-col gap-1">
                     <label
                       htmlFor="recipientAddress"
@@ -132,12 +178,14 @@ export default function Home() {
                     <input
                       className="rounded-xl border px-4 py-3"
                       name="recipientAddress"
+                      required
                     />
                   </div>
                   <div className="flex relative flex-col gap-1">
                     <input
                       className="rounded-xl  border px-4 py-3"
-                      name="amount"
+                      name="sendAmount"
+                      required
                     />
                     <p className="absolute right-0 -translate-x-1/2 cursor-pointer font-bold translate-y-3 text-[22px] text-[#9396FF]">
                       MAX
@@ -146,7 +194,10 @@ export default function Home() {
                       BAL : 1234 GHO
                     </p>
                   </div>
-                  <button className="bg-[#F5E26A] rounded-xl text-black text-[22px] font-bold py-3 mt-10">
+                  <button
+                    type="submit"
+                    className="bg-[#F5E26A] rounded-xl text-black text-[22px] font-bold py-3 mt-10"
+                  >
                     SEND
                   </button>
                 </form>
@@ -155,6 +206,14 @@ export default function Home() {
           </DialogContent>
         </Dialog>
       </div>
+      {visible && address && (
+        <div className="bg-white w-full flex items-center justify-center h-[300px]">
+          <iframe
+            src={`https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=${address}&choe=UTF-8`}
+            className=" h-full"
+          ></iframe>
+        </div>
+      )}
       <Table
         title="TRANSACTION HISTORY"
         data={[
